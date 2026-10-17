@@ -1,0 +1,6 @@
+# @google/genai and protobufjs are transitive dependencies of @earendil-works/pi-agent-core.
+# Mova targets the browser/Tauri WebView here, so their postinstall/native/protobuf build scripts
+# are not needed; keep them explicitly disabled to avoid pnpm install/verification prompts.
+allowBuilds:
+  '@google/genai': false
+  protobufjs: false

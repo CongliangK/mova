@@ -1,0 +1,456 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mova.local/schemas/qa-report-v0.schema.json",
+  "title": "Mova QA report v0",
+  "description": "Small, additive v0 contract for test, QA, and benchmark evidence. Reports must not include secrets, prompts, raw provider payloads, request/response URLs, or private asset contents.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "reportId",
+    "generatedAt",
+    "command",
+    "environment",
+    "executionLane",
+    "privacy",
+    "redactionCheck",
+    "providerMetadata",
+    "artifactPolicy",
+    "suites",
+    "artifacts"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "mova.qa-report.v0"
+    },
+    "reportId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "command": {
+      "$ref": "#/$defs/command"
+    },
+    "environment": {
+      "$ref": "#/$defs/environment"
+    },
+    "executionLane": {
+      "$ref": "#/$defs/executionLane"
+    },
+    "privacy": {
+      "$ref": "#/$defs/privacy"
+    },
+    "redactionCheck": {
+      "$ref": "#/$defs/redactionCheck"
+    },
+    "providerMetadata": {
+      "type": "array",
+      "description": "Allowlist-only provider metadata. Do not add prompts, API keys, raw request/response payloads, provider URLs, signed URLs, or private asset paths.",
+      "items": {
+        "$ref": "#/$defs/providerMetadata"
+      }
+    },
+    "artifactPolicy": {
+      "$ref": "#/$defs/artifactPolicy"
+    },
+    "suites": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/suite"
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "args", "exitCode"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cwd": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*://).+",
+          "description": "Repository-relative working directory when known. Avoid absolute paths that expose user names."
+        },
+        "exitCode": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runner", "os", "node", "appVersion"],
+      "properties": {
+        "runner": {
+          "type": "string",
+          "examples": ["vitest", "manual", "tauri-dev"]
+        },
+        "os": {
+          "type": "string"
+        },
+        "node": {
+          "type": "string"
+        },
+        "appVersion": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "string",
+          "description": "Git commit SHA or short SHA when available."
+        },
+        "ci": {
+          "type": "boolean"
+        },
+        "hardwareProfile": {
+          "type": "string",
+          "description": "Coarse, non-identifying profile such as linux-wayland-integrated-gpu."
+        }
+      }
+    },
+    "executionLane": {
+      "type": "string",
+      "description": "mock-offline is the default safe lane. live-opt-in means the run intentionally used an external provider and must still only report allowlisted metadata.",
+      "enum": ["mock-offline", "live-opt-in"]
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["marker", "containsPrivateAssets", "containsSecrets", "dataPolicy"],
+      "properties": {
+        "marker": {
+          "type": "string",
+          "enum": ["public-safe", "internal", "private-assets", "secret-derived-prohibited"]
+        },
+        "containsPrivateAssets": {
+          "type": "boolean"
+        },
+        "containsSecrets": {
+          "type": "boolean"
+        },
+        "dataPolicy": {
+          "type": "string",
+          "enum": ["synthetic-only", "redacted-user-data", "live-provider-metadata-only"]
+        }
+      }
+    },
+    "redactionCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "checks"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["not-required", "passed", "failed", "skipped-with-reason"]
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "no-secrets",
+              "no-prompts",
+              "no-raw-provider-payloads",
+              "no-provider-urls",
+              "no-private-asset-contents",
+              "artifact-paths-are-relative"
+            ]
+          }
+        },
+        "checkedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "providerMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["providerRef", "lane", "providerKind"],
+      "properties": {
+        "providerRef": {
+          "type": "string",
+          "description": "Local report reference, not a credential or account identifier."
+        },
+        "lane": {
+          "$ref": "#/$defs/executionLane"
+        },
+        "providerKind": {
+          "type": "string",
+          "enum": ["mock", "openai", "anthropic", "gemini", "bedrock", "other"]
+        },
+        "model": {
+          "type": "string"
+        },
+        "sdkName": {
+          "type": "string"
+        },
+        "sdkVersion": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string",
+          "description": "Coarse provider region only, never endpoint URLs."
+        },
+        "requestCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mockFixtureId": {
+          "type": "string"
+        }
+      }
+    },
+    "artifactPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["defaultRetention", "defaultCleanupOwner"],
+      "properties": {
+        "defaultRetention": {
+          "$ref": "#/$defs/retention"
+        },
+        "defaultCleanupOwner": {
+          "type": "string",
+          "enum": ["test-runner", "developer", "ci", "manual"]
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "suite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["suiteId", "name", "status", "durationMs", "cases"],
+      "properties": {
+        "suiteId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "durationMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cases": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/case"
+          }
+        }
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "caseId",
+        "name",
+        "status",
+        "executionLane",
+        "durationMs",
+        "failureCategory",
+        "artifactRefs"
+      ],
+      "properties": {
+        "caseId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "executionLane": {
+          "$ref": "#/$defs/executionLane"
+        },
+        "durationMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "failureCategory": {
+          "$ref": "#/$defs/failureCategory"
+        },
+        "failureMessage": {
+          "type": "string",
+          "description": "Redacted summary only; no prompts, keys, payloads, URLs, or private file contents."
+        },
+        "providerRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "artifactRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/metric"
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["passed", "failed", "skipped", "warning"]
+    },
+    "failureCategory": {
+      "type": "string",
+      "enum": [
+        "none",
+        "assertion",
+        "timeout",
+        "environment",
+        "artifact-policy",
+        "redaction",
+        "provider",
+        "unknown"
+      ]
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "budget": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pass", "watch", "fail"]
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactId",
+        "kind",
+        "path",
+        "privacyClassification",
+        "retention",
+        "cleanup"
+      ],
+      "properties": {
+        "artifactId": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["json-report", "markdown-report", "log", "screenshot", "export", "trace", "other"]
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*://).+",
+          "description": "Repository-relative or report-relative path only. Do not use provider URLs or absolute private asset paths."
+        },
+        "producedByCaseId": {
+          "type": "string"
+        },
+        "mimeType": {
+          "type": "string"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "type": "string"
+        },
+        "privacyClassification": {
+          "type": "string",
+          "enum": ["public-safe", "internal", "private-user-asset", "secret-derived-prohibited"]
+        },
+        "retention": {
+          "$ref": "#/$defs/retention"
+        },
+        "cleanup": {
+          "$ref": "#/$defs/cleanup"
+        }
+      }
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy"],
+      "properties": {
+        "policy": {
+          "type": "string",
+          "enum": ["keep-checked-in", "keep-local", "delete-after-run", "delete-after-days"]
+        },
+        "days": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "cleanup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "status"],
+      "properties": {
+        "owner": {
+          "type": "string",
+          "enum": ["test-runner", "developer", "ci", "manual"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["not-needed", "pending", "completed", "failed"]
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

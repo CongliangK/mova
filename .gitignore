@@ -1,0 +1,33 @@
+.DS_Store
+.qoder/
+.vite/
+.obsidian/
+.omo/
+progress.md
+home/
+
+# Credentials and private developer state (never add real project data)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+.credentials*
+.agents/
+.pi/
+.pi-worktrees/
+.openclaw/
+.cache/
+.cargo-home/
+.pnpm-store/
+node_modules/
+target/
+*.tsbuildinfo
+coverage/
+# External checkouts and personal presentation material are not release inputs
+/tauri-tauri-ext/
+/ppt/
+# Uncertain-provenance external helpers: preserve local originals, do not distribute
+/skills/

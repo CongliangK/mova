@@ -1,0 +1,132 @@
+{
+  "schemaVersion": "mova.qa-report.v0",
+  "reportId": "sample-performance-baseline-stage1",
+  "generatedAt": "2026-06-15T00:00:00.000Z",
+  "command": {
+    "name": "pnpm",
+    "args": ["test", "--", "src/__tests__/perf/performance-baseline.test.ts"],
+    "cwd": "Mova",
+    "exitCode": 0
+  },
+  "environment": {
+    "runner": "vitest",
+    "os": "linux",
+    "node": "v24.x",
+    "appVersion": "0.1.1",
+    "commit": "sample",
+    "ci": false,
+    "hardwareProfile": "local-workstation"
+  },
+  "executionLane": "mock-offline",
+  "privacy": {
+    "marker": "public-safe",
+    "containsPrivateAssets": false,
+    "containsSecrets": false,
+    "dataPolicy": "synthetic-only"
+  },
+  "redactionCheck": {
+    "status": "passed",
+    "checks": [
+      "no-secrets",
+      "no-prompts",
+      "no-raw-provider-payloads",
+      "no-provider-urls",
+      "no-private-asset-contents",
+      "artifact-paths-are-relative"
+    ],
+    "checkedAt": "2026-06-15T00:00:00.000Z",
+    "notes": "Sample fixture uses synthetic performance data and relative artifact paths."
+  },
+  "providerMetadata": [
+    {
+      "providerRef": "mock-runtime",
+      "lane": "mock-offline",
+      "providerKind": "mock",
+      "requestCount": 0,
+      "mockFixtureId": "perf-fixtures"
+    }
+  ],
+  "artifactPolicy": {
+    "defaultRetention": {
+      "policy": "keep-local",
+      "reason": "Generated performance reports are local artifacts unless intentionally checked in as samples."
+    },
+    "defaultCleanupOwner": "developer",
+    "notes": "Artifacts that contain private assets or live provider output must not be checked in."
+  },
+  "suites": [
+    {
+      "suiteId": "perf-stage1-smoke",
+      "name": "Mova Stage 1 performance baseline smoke",
+      "status": "passed",
+      "durationMs": 1234.5,
+      "cases": [
+        {
+          "caseId": "perf-store-helper-baseline",
+          "name": "records store/helper baseline metrics without external AI or Tauri I/O",
+          "status": "passed",
+          "executionLane": "mock-offline",
+          "durationMs": 1234.5,
+          "failureCategory": "none",
+          "providerRefs": ["mock-runtime"],
+          "artifactRefs": [
+            "performance-baseline-json",
+            "performance-baseline-markdown"
+          ],
+          "metrics": [
+            {
+              "name": "project.large.map-rust-project.p95Ms",
+              "value": 42.1,
+              "unit": "ms",
+              "budget": 1500,
+              "status": "pass"
+            },
+            {
+              "name": "animation.frames.large.current-frame-scrub.p95Ms",
+              "value": 18.4,
+              "unit": "ms",
+              "budget": 500,
+              "status": "pass"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "artifactId": "performance-baseline-json",
+      "kind": "json-report",
+      "path": "reports/performance-baseline-stage1.json",
+      "producedByCaseId": "perf-store-helper-baseline",
+      "mimeType": "application/json",
+      "privacyClassification": "public-safe",
+      "retention": {
+        "policy": "keep-local",
+        "reason": "Local generated baseline output; not required for repository review."
+      },
+      "cleanup": {
+        "owner": "developer",
+        "status": "pending",
+        "notes": "Delete or regenerate after the local comparison run."
+      }
+    },
+    {
+      "artifactId": "performance-baseline-markdown",
+      "kind": "markdown-report",
+      "path": "reports/performance-baseline-stage1.md",
+      "producedByCaseId": "perf-store-helper-baseline",
+      "mimeType": "text/markdown",
+      "privacyClassification": "public-safe",
+      "retention": {
+        "policy": "keep-local",
+        "reason": "Human-readable companion to the local JSON baseline."
+      },
+      "cleanup": {
+        "owner": "developer",
+        "status": "pending"
+      }
+    }
+  ],
+  "notes": "This sample demonstrates the v0 QA report shape only; existing perf:baseline output remains unchanged."
+}
