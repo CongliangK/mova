@@ -63,7 +63,7 @@ cargo test --manifest-path src-tauri/Cargo.toml --locked
 pnpm tauri build --no-bundle      # 本机桌面二进制；需完整原生环境
 ```
 
-已提交 pnpm 与 Cargo 锁文件。GitHub CI 在 Ubuntu 上执行前端四项检查及 Rust check/test，最小只读权限，不签名、不发布、不安装用户程序；不代替桌面交互/真实模型验证。历史测试清单见 [test inventory](Mova/docs/test-inventory.md)，每次验证以实际日志为准。公开前人工检查见 [发布清单](docs/RELEASE_CHECKLIST.md)。
+已提交 pnpm 与 Cargo 锁文件。GitHub CI 在 Ubuntu 上严格检查 frozen install、lint、typecheck、发布契约、479 项功能测试、前端构建、Rust check/test 及锁文件未变；其中任一失败都会阻断。另有独立运行的 3 项性能测试，保留原有测试与本机固定预算，在共享 CI 上作为非阻断诊断；失败仍显示在测试日志、警告与运行摘要中。CI 通过不代表全部 482 项测试都通过。CI 使用最小只读权限，不签名、不发布、不安装用户程序；不代替桌面交互/真实模型验证。历史测试清单见 [test inventory](Mova/docs/test-inventory.md)，每次验证以实际日志为准。公开前人工检查见 [发布清单](docs/RELEASE_CHECKLIST.md)。
 
 ## 贡献与许可
 

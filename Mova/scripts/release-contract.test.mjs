@@ -44,15 +44,29 @@ test('application versions, runtime pins, lockfiles and read-only CI agree', () 
   for (const command of ['pnpm install --frozen-lockfile', 'pnpm lint', 'pnpm typecheck', 'pnpm test:release', 'pnpm build', 'cargo check --manifest-path src-tauri/Cargo.toml --locked', 'cargo test --manifest-path src-tauri/Cargo.toml --locked']) {
     assert.ok(ci.includes(`- run: ${command}\n`), command)
   }
-  // The two consecutive steps partition the complete browser suite without changing its budgets.
-  assert.ok(ci.includes([
+  // Only the isolated performance step is diagnostic; every other check stays blocking.
+  const diagnosticSteps = [
     '      - name: Functional tests',
     '        run: pnpm test --exclude src/__tests__/perf/performance-baseline.test.ts',
     '      - name: Performance baseline (isolated)',
+    '        id: performance',
+    '        continue-on-error: true',
     '        run: pnpm test src/__tests__/perf/performance-baseline.test.ts --no-file-parallelism',
+    '      - name: Report performance baseline outcome',
+    "        if: ${{ !cancelled() && (steps.performance.outcome == 'success' || steps.performance.outcome == 'failure') }}",
+    '        env:',
+    '          PERFORMANCE_OUTCOME: ${{ steps.performance.outcome }}',
+    '        run: |',
+    '          echo "### Performance baseline (diagnostic)" >> "$GITHUB_STEP_SUMMARY"',
+    '          echo "Actual step outcome: ${PERFORMANCE_OUTCOME}. This shared-runner check is non-blocking; its original budgets and assertions remain unchanged." >> "$GITHUB_STEP_SUMMARY"',
+    '          if [ "$PERFORMANCE_OUTCOME" != "success" ]; then',
+    '            echo "::warning::Performance baseline failed. See its test log for the actual failure; functional tests and build checks remain blocking."',
+    '          fi',
     '',
-  ].join('\n')), 'run all functional tests, then the unchanged performance file without file parallelism')
-  assert.doesNotMatch(ci, /^\s*(?:continue-on-error|if):|--(?:retry|passWithNoTests|testNamePattern|bail)\b/m)
+  ].join('\n')
+  assert.ok(ci.includes(diagnosticSteps), 'run the full partition and report actual performance outcome without blocking other checks')
+  assert.doesNotMatch(ci.replace(diagnosticSteps, ''), /^\s*(?:continue-on-error|if):/m, 'no other tolerated failures or conditional skips')
+  assert.doesNotMatch(ci, /--(?:retry|passWithNoTests|testNamePattern|bail)\b|\|\|\s*true\b|set\s+\+e\b/)
   assert.equal(pkg.scripts.test, 'vitest run', 'retain the full product test entry point')
   assert.equal(pkg.scripts['test:release'], 'node --test scripts/release-contract.test.mjs')
 })

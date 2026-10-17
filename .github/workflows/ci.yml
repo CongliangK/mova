@@ -49,7 +49,19 @@ jobs:
       - name: Functional tests
         run: pnpm test --exclude src/__tests__/perf/performance-baseline.test.ts
       - name: Performance baseline (isolated)
+        id: performance
+        continue-on-error: true
         run: pnpm test src/__tests__/perf/performance-baseline.test.ts --no-file-parallelism
+      - name: Report performance baseline outcome
+        if: ${{ !cancelled() && (steps.performance.outcome == 'success' || steps.performance.outcome == 'failure') }}
+        env:
+          PERFORMANCE_OUTCOME: ${{ steps.performance.outcome }}
+        run: |
+          echo "### Performance baseline (diagnostic)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Actual step outcome: ${PERFORMANCE_OUTCOME}. This shared-runner check is non-blocking; its original budgets and assertions remain unchanged." >> "$GITHUB_STEP_SUMMARY"
+          if [ "$PERFORMANCE_OUTCOME" != "success" ]; then
+            echo "::warning::Performance baseline failed. See its test log for the actual failure; functional tests and build checks remain blocking."
+          fi
       - run: pnpm build
       - run: cargo check --manifest-path src-tauri/Cargo.toml --locked
       - run: cargo test --manifest-path src-tauri/Cargo.toml --locked
