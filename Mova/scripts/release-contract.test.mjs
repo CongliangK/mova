@@ -41,9 +41,18 @@ test('application versions, runtime pins, lockfiles and read-only CI agree', () 
   assert.ok(ci.includes('node-version-file: .node-version'))
   assert.ok(ci.includes(`corepack prepare ${pkg.packageManager} --activate`))
   assert.ok(ci.includes(`rustup toolchain install ${rust} --profile minimal`))
-  for (const command of ['pnpm install --frozen-lockfile', 'pnpm lint', 'pnpm typecheck', 'pnpm test:release', 'pnpm test', 'pnpm build', 'cargo check --manifest-path src-tauri/Cargo.toml --locked', 'cargo test --manifest-path src-tauri/Cargo.toml --locked']) {
+  for (const command of ['pnpm install --frozen-lockfile', 'pnpm lint', 'pnpm typecheck', 'pnpm test:release', 'pnpm build', 'cargo check --manifest-path src-tauri/Cargo.toml --locked', 'cargo test --manifest-path src-tauri/Cargo.toml --locked']) {
     assert.ok(ci.includes(`- run: ${command}\n`), command)
   }
+  // The two consecutive steps partition the complete browser suite without changing its budgets.
+  assert.ok(ci.includes([
+    '      - name: Functional tests',
+    '        run: pnpm test --exclude src/__tests__/perf/performance-baseline.test.ts',
+    '      - name: Performance baseline (isolated)',
+    '        run: pnpm test src/__tests__/perf/performance-baseline.test.ts --no-file-parallelism',
+    '',
+  ].join('\n')), 'run all functional tests, then the unchanged performance file without file parallelism')
+  assert.doesNotMatch(ci, /^\s*(?:continue-on-error|if):|--(?:retry|passWithNoTests|testNamePattern|bail)\b/m)
   assert.equal(pkg.scripts.test, 'vitest run', 'retain the full product test entry point')
   assert.equal(pkg.scripts['test:release'], 'node --test scripts/release-contract.test.mjs')
 })

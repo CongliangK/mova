@@ -46,7 +46,10 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test:release
-      - run: pnpm test
+      - name: Functional tests
+        run: pnpm test --exclude src/__tests__/perf/performance-baseline.test.ts
+      - name: Performance baseline (isolated)
+        run: pnpm test src/__tests__/perf/performance-baseline.test.ts --no-file-parallelism
       - run: pnpm build
       - run: cargo check --manifest-path src-tauri/Cargo.toml --locked
       - run: cargo test --manifest-path src-tauri/Cargo.toml --locked
